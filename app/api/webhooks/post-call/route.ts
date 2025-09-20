@@ -1,21 +1,20 @@
 import { connectDB } from "@/lib/db";
 import { PostCallWebhookPayload } from "@/lib/schemas";
+import { Appointment } from "@/models/appointment.model";
 import { Call, CallStatusEnum } from "@/models/call.model";
 import { Patient } from "@/models/patient.model";
-import { parseWebhookPayload } from "@/utils/webhook-utils";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-
-    const payload: PostCallWebhookPayload = await parseWebhookPayload(request);
-
     await connectDB();
+
+    const payload = await request.json();
 
     console.log("[Post-call Webhook] Received payload:", payload);
 
     const call = await Call.findOneAndUpdate(
-      { callId: payload.call_id },
+      { callId: payload.sessionId },
       {
         $set: {
           status:
@@ -33,7 +32,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (!call) {
-      console.error("[Post-call Webhook] Call not found:", payload.call_id);
+      console.error("[Post-call Webhook] Call not found:", payload.sessionId);
       return NextResponse.json({ error: "Call not found" }, { status: 404 });
     }
 
@@ -149,11 +148,9 @@ async function updatePatientRecord(
       },
     };
 
-    // Add specific updates based on call content
     const transcript = payload.transcript.toLowerCase();
 
     if (transcript.includes("new allergy")) {
-      // Extract allergy information (simplified)
       const allergyMatch = transcript.match(/allergic to (\w+)/i);
       if (allergyMatch) {
         updateData.$addToSet = {
@@ -163,12 +160,15 @@ async function updatePatientRecord(
     }
 
     await Patient.findByIdAndUpdate(patientId, updateData);
+    await Appointment.findOneAndUpdate(
+      { patientId },
+      { status: payload.status }
+    );
     console.log("[Post-call] Updated patient record:", patientId);
   } catch (error) {
     console.error("[Post-call] Error updating patient record:", error);
   }
 }
-
 
 function extractKeywords(transcript: string): string[] {
   const medicalKeywords = [

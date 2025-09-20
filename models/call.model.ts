@@ -50,6 +50,7 @@ export interface ICall extends Document {
     callQuality?: number;
     userSatisfaction?: number;
   };
+  openMicBotId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -66,6 +67,10 @@ const CallSchema = new Schema<ICall>(
       type: String,
       required: true,
       ref: "Bot",
+    },
+    openMicBotId: {
+      type: String,
+      required: true,
     },
     patientId: {
       type: String,
@@ -109,10 +114,7 @@ const CallSchema = new Schema<ICall>(
       postCallData: Schema.Types.Mixed,
     },
     metadata: {
-      startTime: {
-        type: Date,
-        required: true,
-      },
+      startTime: Date,
       endTime: Date,
       callQuality: Number,
       userSatisfaction: Number,

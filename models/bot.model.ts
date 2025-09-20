@@ -26,8 +26,8 @@ export interface IBot extends Document {
     language: string;
     maxCallDuration: number;
   };
-  createdAt: Date;
-  updatedAt: Date;
+  first_message : string
+  post_call_settings : object
 }
 
 const BotSchema = new Schema<IBot>(
@@ -77,6 +77,8 @@ const BotSchema = new Schema<IBot>(
         default: 10 * 60,
       },
     },
+    first_message : String,
+    post_call_settings : Object
   },
   {
     timestamps: true,

@@ -1,62 +1,35 @@
 import { connectDB } from "@/lib/db";
-import { FunctionCallWebhookPayload } from "@/lib/schemas";
 import { Call } from "@/models/call.model";
 import { Patient } from "@/models/patient.model";
-import { parseWebhookPayload } from "@/utils/webhook-utils";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    const payload: FunctionCallWebhookPayload = await parseWebhookPayload(
-      request
-    );
-
     await connectDB();
 
+    const payload = await request.json();
     console.log("[Function Call Webhook] Received payload:", payload);
 
     await Call.findOneAndUpdate(
-      { callId: payload.call_id },
-      {
-        $set: {
-          "webhookData.functionCallData": payload,
-          status: "in-progress",
-        },
-      }
+      { callId: payload.sessionId },
+      { $set: { status: "in-progress" } }
     );
 
-    switch (payload.function_name) {
-      case "get_patient_info":
-        return await handleGetPatientInfo(payload);
-
-      default:
-        console.log(
-          "[Function Call Webhook] Unknown function:",
-          payload.function_name
-        );
-        return NextResponse.json(
-          {
-            error: "Unknown function",
-            message:
-              "I apologize, but I cannot process that request right now.",
-          },
-          { status: 400 }
-        );
-    }
+    return handleGetPatientInfo(payload);
   } catch (error) {
     console.error("[Function Call Webhook] Error:", error);
     return NextResponse.json(
       {
         error: "Internal server error",
         message:
-          "I apologize, but I'm having trouble accessing that information right now. Please try again later.",
+          "I apologize, but I'm having trouble accessing that information right now. I will connect you shortly.",
       },
       { status: 500 }
     );
   }
 }
 
-async function handleGetPatientInfo(payload: FunctionCallWebhookPayload) {
+async function handleGetPatientInfo(payload: any) {
   try {
     const medicalId = payload.parameters.medical_id;
 
@@ -76,18 +49,15 @@ async function handleGetPatientInfo(payload: FunctionCallWebhookPayload) {
       medicalId
     );
 
-    // Find patient by medical ID
     const patient = await Patient.findOne({ medicalId });
 
     if (!patient) {
-      console.log("[Function Call] Patient not found:", medicalId);
       return NextResponse.json({
         patient_found: false,
         message: `I couldn't find a patient with medical ID ${medicalId}. Could you please verify the ID or provide your full name and date of birth?`,
       });
     }
 
-    // Update call record with patient ID
     await Call.findOneAndUpdate(
       { callId: payload.call_id },
       {
@@ -99,13 +69,6 @@ async function handleGetPatientInfo(payload: FunctionCallWebhookPayload) {
       }
     );
 
-    console.log(
-      "[Function Call] Found patient:",
-      patient.firstName,
-      patient.lastName
-    );
-
-    // Return patient information for the AI to use
     const patientInfo = {
       patient_found: true,
       patient_data: {
