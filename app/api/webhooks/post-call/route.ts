@@ -1,4 +1,5 @@
 import { connectDB } from "@/lib/db";
+import openMicAPI from "@/lib/openmic-api";
 import { PostCallWebhookPayload } from "@/lib/schemas";
 import { Appointment } from "@/models/appointment.model";
 import { Call, CallStatusEnum } from "@/models/call.model";
@@ -13,23 +14,19 @@ export async function POST(request: NextRequest) {
 
     console.log("[Post-call Webhook] Received payload:", payload);
 
-    const call = await Call.findOneAndUpdate(
-      { callId: payload.sessionId },
-      {
-        $set: {
-          status:
-            payload.status === CallStatusEnum.COMPLETED
-              ? CallStatusEnum.COMPLETED
-              : CallStatusEnum.FAILED,
-          duration: payload.duration,
-          transcript: payload.transcript,
-          summary: payload.summary,
-          "metadata.endTime": new Date(payload.timestamp),
-          "webhookData.postCallData": payload,
-        },
-      },
-      { new: true }
-    );
+    const { status, date, time, note } = payload;
+
+    const call = await openMicAPI.getCall(payload.sessionId);
+
+    const patient = await Patient.findOne({ medicalId: call.customer_id });
+
+    let data: Record<string, any> = {};
+    data.status = status;
+    if (date) data.date = date;
+    if (time) data.time = time;
+    if (note) data.note = note;
+
+    await Appointment.findOne({ medicalId: call.customer_id }, { $set: data });
 
     if (!call) {
       console.error("[Post-call Webhook] Call not found:", payload.sessionId);
@@ -38,16 +35,20 @@ export async function POST(request: NextRequest) {
 
     const insights = await processCallInsights(payload, call);
 
-    await Call.findByIdAndUpdate(call._id, {
-      $set: {
-        "extractedData.reasonForCall": insights.reasonForCall,
-        "extractedData.urgencyLevel": insights.urgencyLevel,
-        "extractedData.followUpRequired": insights.followUpRequired,
-      },
-    });
+    await Call.findOneAndUpdate(
+      { callId: call.call_id },
+      {
+        $set: {
+          status: CallStatusEnum.COMPLETED,
+          "extractedData.reasonForCall": insights.reasonForCall,
+          "extractedData.urgencyLevel": insights.urgencyLevel,
+          "extractedData.followUpRequired": insights.followUpRequired,
+        },
+      }
+    );
 
-    if (call.patientId && insights.shouldUpdatePatient) {
-      await updatePatientRecord(call.patientId, insights, payload);
+    if (call.customer_id && insights.shouldUpdatePatient) {
+      await updatePatientRecord(call.customer_id, insights, payload);
     }
 
     console.log(
@@ -159,9 +160,9 @@ async function updatePatientRecord(
       }
     }
 
-    await Patient.findByIdAndUpdate(patientId, updateData);
+    await Patient.findOneAndUpdate({ medicalId: patientId }, updateData);
     await Appointment.findOneAndUpdate(
-      { patientId },
+      { medicalId: patientId },
       { status: payload.status }
     );
     console.log("[Post-call] Updated patient record:", patientId);

@@ -86,7 +86,7 @@ class OpenMicAPI {
 
   async getCall(callId: string): Promise<OpenMicCall> {
     try {
-      const response = await this.client.get(`/calls/${callId}`);
+      const response = await this.client.get(`/call/${callId}`);
       return response.data;
     } catch (error) {
       console.error("Error fetching call:", error);

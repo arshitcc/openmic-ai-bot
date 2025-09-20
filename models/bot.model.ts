@@ -1,9 +1,7 @@
 import mongoose, { type Document, Schema } from "mongoose";
 
-const AvailableDomainsEnum = {
+export const AvailableDomainsEnum = {
   MEDICAL: "medical",
-  LEGAL: "legal",
-  RECEPTIONIST: "receptionist",
 } as const;
 
 export const AvailableDomains = Object.values(AvailableDomainsEnum);
@@ -26,8 +24,10 @@ export interface IBot extends Document {
     language: string;
     maxCallDuration: number;
   };
-  first_message : string
-  post_call_settings : object
+  first_message: string;
+  post_call_settings: object;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const BotSchema = new Schema<IBot>(
@@ -63,22 +63,9 @@ const BotSchema = new Schema<IBot>(
       functionCall: String,
       postCall: String,
     },
-    settings: {
-      voice: {
-        type: String,
-        default: "alloy",
-      },
-      language: {
-        type: String,
-        default: "en",
-      },
-      maxCallDuration: {
-        type: Number,
-        default: 10 * 60,
-      },
-    },
-    first_message : String,
-    post_call_settings : Object
+    settings: Object,
+    first_message: String,
+    post_call_settings: Object,
   },
   {
     timestamps: true,

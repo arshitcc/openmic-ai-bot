@@ -9,6 +9,7 @@ import {
   UsersIcon,
   BarChart3Icon,
   HomeIcon,
+  Calendar1Icon,
 } from "lucide-react";
 
 const navigation = [
@@ -17,6 +18,7 @@ const navigation = [
   { name: "Calls", href: "/calls", icon: PhoneIcon },
   { name: "Patients", href: "/patients", icon: UsersIcon },
   { name: "Analytics", href: "/analytics", icon: BarChart3Icon },
+  { name: "Appointments", href: "/appointments", icon: Calendar1Icon },
 ];
 
 export function Navigation() {

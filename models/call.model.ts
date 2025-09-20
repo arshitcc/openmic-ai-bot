@@ -50,7 +50,9 @@ export interface ICall extends Document {
     callQuality?: number;
     userSatisfaction?: number;
   };
+  medicalId: string;
   openMicBotId: string;
+  dynamic_variables: any;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -76,6 +78,10 @@ const CallSchema = new Schema<ICall>(
       type: String,
       required: true,
       ref: "Patient",
+    },
+    medicalId: {
+      type: String,
+      required: true,
     },
     phoneNumber: {
       type: String,
@@ -119,6 +125,7 @@ const CallSchema = new Schema<ICall>(
       callQuality: Number,
       userSatisfaction: Number,
     },
+    dynamic_variables: Object,
   },
   {
     timestamps: true,

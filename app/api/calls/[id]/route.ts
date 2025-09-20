@@ -2,14 +2,13 @@ import { connectDB } from "@/lib/db";
 import { Call } from "@/models/call.model";
 import { type NextRequest, NextResponse } from "next/server";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { callId: string } }
-) {
+export async function GET(request: NextRequest, context: any) {
   try {
     await connectDB();
 
-    const call = await Call.findOne({ callId: params.callId }).populate(
+    const { id } = await context.params;
+
+    const call = await Call.findOne({ callId: id }).populate(
       "patientId",
       "firstName lastName medicalId email phone"
     );

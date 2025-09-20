@@ -23,17 +23,30 @@ export interface OpenMicBot {
   language: string;
   webhook_url?: string;
   function_calling_webhook?: string;
+  post_call_settings: {
+    summary_prompt: string;
+  };
+  call_settings: {
+    max_call_duration: number;
+    silence_timeout_message: string;
+    hipaa_compliance_enabled: boolean;
+  };
   created_at: string;
   updated_at: string;
 }
 
 export interface OpenMicCall {
-  id: string;
-  bot_id: string;
-  phone_number: string;
+  call_id: string;
+  agent_id: string;
+  from_number: string;
+  to_number : string
+  customer_id: string; // medicalId
   status: string;
-  duration: number;
-  transcript: string;
+  transcript: [string, string][];
+  start_timestamp : number;
+  end_timestamp : number;
+  duration_ms : number;
+  call_analysis: any;
   created_at: string;
   ended_at?: string;
 }

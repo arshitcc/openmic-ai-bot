@@ -1,7 +1,12 @@
 import { connectDB } from "@/lib/db";
 import openMicAPI from "@/lib/openmic-api";
 import { Bot } from "@/models/bot.model";
-import { getPreAppointmentIntakeVerification, medicalBotPrompt, medicalSummaryBotPrompt } from "@/utils/prompt";
+import {
+  getPreAppointmentIntakeVerification,
+  getPreAppointmentIntakeVerificationFirstMessage,
+  medicalBotPrompt,
+  medicalSummaryBotPrompt,
+} from "@/utils/prompt";
 import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET() {
@@ -27,8 +32,7 @@ export async function POST(request: NextRequest) {
       name: data.name,
       prompt: medicalBotPrompt + getPreAppointmentIntakeVerification,
       voice: data.settings?.voice || "alloy",
-      language: data.settings?.language || "en",
-      first_message: data.first_message || "",
+      first_message: getPreAppointmentIntakeVerificationFirstMessage || "",
       call_settings: {
         max_call_duration: data.settings?.maxCallDuration || 5,
         silence_timeout_message:
@@ -38,20 +42,44 @@ export async function POST(request: NextRequest) {
       },
       post_call_settings: {
         summary_prompt: data.summary_prompt || medicalSummaryBotPrompt,
+        structured_extraction_prompt: `
+        return response  as { status: "CONFIRM" | "CANCEL" | "RESCHEDULE" } 
+        if reschedule then give date and time in  {date, time}
+        If the patient says CONFIRM for the appointment date return {status : "confirmed"}
+        If the patient says CANCEL for the appointment date return {status : "cancelled"}
+        If the patient says RESCHEDULE for the appointment date return {status : "rescheduled", date : date, time : time}
+      `,
+        success_evaluation_prompt: `If the patient says CONFIRM for the appointment date return {status : "confirmed"}
+        If the patient says CANCEL for the appointment date and ask for reason return {status : "cancelled", message:}
+        If the patient says RESCHEDULE for the appointment date return {status : "rescheduled", date : date, time : time}`,
+        structured_extraction_json_schema: {
+          status: "confirm",
+          date: new Date(),
+          time: "",
+          message : ""
+        },
       },
     });
 
     const bot = await Bot.create({
-      name: data.name,
+      name: openMicBot.name,
       description: data.description,
       openMicBotId: openMicBot.uid,
       domain: data.domain || "medical",
-      prompt: data.prompt || medicalBotPrompt,
-      first_message: data.first_message || "",
+      prompt: openMicBot.prompt || medicalBotPrompt,
+      first_message: getPreAppointmentIntakeVerificationFirstMessage,
       settings: {
-        voice: data.settings?.voice || "alloy",
-        language: data.settings?.language || "en",
-        maxCallDuration: data.settings?.maxCallDuration || 600,
+        voice: openMicBot.voice || "alloy",
+        max_call_duration: openMicBot.call_settings.max_call_duration || 5,
+        silence_timeout_message:
+          openMicBot.call_settings.silence_timeout_message ||
+          "You have been silent for too long. Please continue the conversation.",
+        hipaa_compliance_enabled: true,
+      },
+      post_call_settings: {
+        summary_prompt:
+          openMicBot.post_call_settings.summary_prompt ||
+          medicalSummaryBotPrompt,
       },
     });
 

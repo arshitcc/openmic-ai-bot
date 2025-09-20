@@ -63,7 +63,6 @@ const PatientSchema = new Schema<IPatient>(
     email: {
       type: String,
       required: true,
-      unique: true,
     },
     phone: {
       type: String,

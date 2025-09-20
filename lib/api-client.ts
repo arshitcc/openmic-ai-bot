@@ -1,5 +1,6 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig } from "axios";
 import { OpenMicCall } from "./schemas";
+import { IPatient } from "@/models/patient.model";
 
 class ApiClient {
   private client: AxiosInstance;
@@ -52,6 +53,12 @@ class ApiClient {
     });
   }
 
+  async deleteBot(id: string) {
+    return this.request(`/bots/${id}`, {
+      method: "DELETE",
+    });
+  }
+
   async getCalls(params?: {
     patientId?: string;
     botId?: string;
@@ -82,6 +89,10 @@ class ApiClient {
 
   async getPatients() {
     return this.request<{ patients: any[] }>("/patients");
+  }
+
+  async getAppointments(medicalId: string) {
+    return this.request<{ appointments: any[] }>(`/appointments/${medicalId}`);
   }
 
   async getPatient(medicalId: string) {

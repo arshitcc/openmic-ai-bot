@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     console.log("[Function Call Webhook] Received payload:", payload);
 
     await Call.findOneAndUpdate(
-      { callId: payload.sessionId },
+      { callId: payload.call_id },
       { $set: { status: "in-progress" } }
     );
 
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
 
 async function handleGetPatientInfo(payload: any) {
   try {
-    const medicalId = payload.parameters.medical_id;
+    const { medicalId } = payload.parameters;
 
     if (!medicalId) {
       return NextResponse.json(
@@ -53,7 +53,7 @@ async function handleGetPatientInfo(payload: any) {
 
     if (!patient) {
       return NextResponse.json({
-        patient_found: false,
+        verified: false,
         message: `I couldn't find a patient with medical ID ${medicalId}. Could you please verify the ID or provide your full name and date of birth?`,
       });
     }
@@ -69,39 +69,21 @@ async function handleGetPatientInfo(payload: any) {
       }
     );
 
-    const patientInfo = {
-      patient_found: true,
-      patient_data: {
-        medical_id: patient.medicalId,
-        name: `${patient.firstName} ${patient.lastName}`,
-        date_of_birth: patient.dateOfBirth.toISOString().split("T")[0],
-        phone: patient.phone,
-        email: patient.email,
-        last_visit: patient.lastVisit
-          ? patient.lastVisit.toISOString().split("T")[0]
-          : null,
-        allergies: patient.medicalHistory.allergies,
-        current_medications: patient.medicalHistory.medications,
-        medical_conditions: patient.medicalHistory.conditions,
-        insurance_provider: patient.insurance.provider,
-        emergency_contact: {
-          name: patient.emergencyContact.name,
-          relationship: patient.emergencyContact.relationship,
-          phone: patient.emergencyContact.phone,
-        },
-      },
-      message: `Thank you, ${
-        patient.firstName
-      }. I found your information. I can see you're with ${
-        patient.insurance.provider
-      } insurance and your last visit was ${
-        patient.lastVisit
-          ? new Date(patient.lastVisit).toLocaleDateString()
-          : "not on record"
-      }. How can I help you today?`,
-    };
-
-    return NextResponse.json(patientInfo);
+    return NextResponse.json({
+      verified: true,
+      message: `Thank you ${patient.firstName} for confirmation`,
+      details: `
+         Patient Details:
+        * Medical ID : ${patient.medicalId}
+        * Name : ${patient.firstName} ${patient.lastName}
+        * DOB : ${patient.dateOfBirth}
+        * Address : ${patient.address.street}, ${patient.address.city}, ${patient.address.zipCode}
+        * Phone : ${patient.phone}
+        * Allergies : ${patient.medicalHistory.allergies} (list of strings)
+        * Medications : ${patient.medicalHistory.medications} (list of strings)
+        * Insurance : ${patient.insurance.provider} ${patient.insurance.policyNumber}
+      `,
+    });
   } catch (error) {
     console.error("[Function Call] Error in handleGetPatientInfo:", error);
     return NextResponse.json(
