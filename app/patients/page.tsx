@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { apiClient } from "@/lib/api-client";
 import { formatDate } from "@/utils/date";
 import Link from "next/link";
+import { AddPatientModal } from "./__components/patient-form";
 
 function Patients() {
   const { patients, setPatients, isLoadingPatients, setIsLoadingPatients } =
@@ -52,6 +53,10 @@ function Patients() {
     );
   });
 
+  const handlePatientAdded = () => {
+    fetchPatients();
+  };
+
   if (isLoadingPatients) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -70,9 +75,12 @@ function Patients() {
               Manage patient records and information
             </p>
           </div>
-          <Button onClick={fetchPatients} variant="outline">
-            Refresh
-          </Button>
+          <div className="flex gap-2">
+            <AddPatientModal onPatientAdded={handlePatientAdded} />
+            <Button onClick={fetchPatients} variant="outline">
+              Refresh
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -104,10 +112,11 @@ function Patients() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredPatients.map((patient) => (
-              <Link href={`/patients/${patient.medicalId}`} key={patient.medicalId as string}>
-                <Card
-                  className="hover:shadow-lg transition-shadow hover:bg-blue-50/30"
-                >
+              <Link
+                href={`/patients/${patient.medicalId}`}
+                key={patient.medicalId as string}
+              >
+                <Card className="hover:shadow-lg transition-shadow hover:bg-blue-50/30">
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center space-x-2">

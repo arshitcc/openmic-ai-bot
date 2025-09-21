@@ -71,8 +71,6 @@ PRE-CALL (what you must do before dialing):
   - If pre-call webhook returns no record, the agent should say: "We don't have your record on file — a staff member will follow up." Then flag for manual follow-up and end.
 
 IN-CALL (what the agent must do during the phone call):
-  1. Greeting & Introduction: Start by greeting the patient by first name and introduce yourself and reason for the call.
-     Example: "Hello {{patient.firstName}} — my name is Alex, I'm calling from Dr. Smith's office to confirm your appointment on {{appointment.date}} at {{appointment.time}}."
 
   2. Immediately ask for the patient's Medical ID (exact wording):
      "Before we proceed, can you please provide your Medical ID so I can verify your record?"
