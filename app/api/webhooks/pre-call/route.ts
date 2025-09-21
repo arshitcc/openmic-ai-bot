@@ -25,8 +25,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(call)
-
     const openMicCall = await openMicAPI.getCall(call.callId);
 
     const patient = await Patient.findOne({medicalId : openMicCall?.customer_id});

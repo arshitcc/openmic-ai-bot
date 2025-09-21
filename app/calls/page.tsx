@@ -36,8 +36,6 @@ function Calls() {
     setSelectedCall,
   } = useAppStore();
 
-  console.log(calls);
-
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [urgencyFilter, setUrgencyFilter] = useState<string>("all");
@@ -85,6 +83,8 @@ function Calls() {
         return <Badge variant="warning">In Progress</Badge>;
       case "failed":
         return <Badge variant="destructive">Failed</Badge>;
+      case "cancelled":
+        return <Badge variant="destructive">Cancelled</Badge>;
       default:
         return <Badge variant="secondary">Initiated</Badge>;
     }

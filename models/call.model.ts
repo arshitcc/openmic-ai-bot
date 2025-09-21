@@ -1,13 +1,10 @@
 import mongoose, { type Document, Schema } from "mongoose";
 
 export const CallStatusEnum = {
-  CONFIRMED: "confirmed",
   IN_PROGRESS: "in-progress",
   COMPLETED: "completed",
   FAILED: "failed",
-  RESCHEDULED: "rescheduled",
   CANCELLED: "cancelled",
-  PENDING: "pending",
   INITIATED: "initiated",
 } as const;
 
